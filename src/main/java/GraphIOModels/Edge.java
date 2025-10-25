@@ -1,3 +1,5 @@
+package GraphIOModels;
+
 public class Edge implements Comparable<Edge> {
     public int src, dest, weight;
 
@@ -14,6 +16,6 @@ public class Edge implements Comparable<Edge> {
 
     @Override
     public String toString() {
-        return "(" + src + " - " + dest + ", w=" + weight + ")";
+        return src + " - " + dest + " (" + weight + ")";
     }
 }
