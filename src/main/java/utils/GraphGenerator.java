@@ -1,54 +1,62 @@
 package utils;
 
-import GraphIOModels.GraphData;
 import GraphIOModels.Edge;
-import utils.JsonUtils;
+import GraphIOModels.GraphData;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 public class GraphGenerator {
+
+    private static final Random random = new Random();
 
     public static List<GraphData> generateGraphs() {
         List<GraphData> graphs = new ArrayList<>();
 
-        // 5 small (30 nodes)
-        for (int i = 0; i < 5; i++) graphs.add(generateGraph(30, "small_" + i));
+        // Small (30 nodes, 5 graphs)
+        for (int i = 1; i <= 5; i++) {
+            graphs.add(generateGraph(i, 30, "small"));
+        }
 
-        // 10 medium (300 nodes)
-        for (int i = 0; i < 10; i++) graphs.add(generateGraph(300, "medium_" + i));
+        // Medium (300 nodes, 10 graphs)
+        for (int i = 6; i <= 15; i++) {
+            graphs.add(generateGraph(i, 300, "medium"));
+        }
 
-        // 10 large (1000 nodes)
-        for (int i = 0; i < 10; i++) graphs.add(generateGraph(1000, "large_" + i));
+        // Large (1000 nodes, 10 graphs)
+        for (int i = 16; i <= 25; i++) {
+            graphs.add(generateGraph(i, 1000, "large"));
+        }
 
-        // 3 extra large (1300, 1600, 2000 nodes)
-        graphs.add(generateGraph(1300, "xlarge_1300"));
-        graphs.add(generateGraph(1600, "xlarge_1600"));
-        graphs.add(generateGraph(2000, "xlarge_2000"));
-
-        // Save to JSON
-        JsonUtils.writeGraphsToJson(graphs, "assign_3_input.json");
+        // Extra Large (1300, 1600, 2000)
+        graphs.add(generateGraph(26, 1300, "extra_large"));
+        graphs.add(generateGraph(27, 1600, "extra_large"));
+        graphs.add(generateGraph(28, 2000, "extra_large"));
 
         return graphs;
     }
 
-    private static GraphData generateGraph(int numNodes, String id) {
-        Random rand = new Random();
-        List<String> nodes = new ArrayList<>();
+    private static GraphData generateGraph(int id, int nodeCount, String type) {
+        List<String> nodeLabels = new ArrayList<>();
+        for (int i = 0; i < nodeCount; i++) {
+            nodeLabels.add("N" + i);
+        }
+
         List<Edge> edges = new ArrayList<>();
+        int maxEdges = (nodeCount * (nodeCount - 1)) / 4; // 25% of full connection for density
 
-        // Create nodes
-        for (int i = 0; i < numNodes; i++) {
-            nodes.add("N" + i);
+        for (int i = 0; i < maxEdges; i++) {
+            int src = random.nextInt(nodeCount);
+            int dest = random.nextInt(nodeCount);
+            int weight = random.nextInt(90) + 10; // weights 10–99
+            if (src != dest) {
+                edges.add(new Edge(src, dest, weight));
+            }
         }
 
-        // Connect randomly (sparse)
-        for (int i = 0; i < numNodes * 2; i++) {
-            int src = rand.nextInt(numNodes);
-            int dest = rand.nextInt(numNodes);
-            int weight = rand.nextInt(100) + 1;
-            if (src != dest) edges.add(new Edge(src, dest, weight));
-        }
+        System.out.println("Generated " + type + " graph #" + id + " with " + nodeCount + " nodes and " + edges.size() + " edges.");
 
-        return new GraphData(id, numNodes, nodes, edges);
+        return new GraphData(id, nodeLabels, edges);
     }
 }

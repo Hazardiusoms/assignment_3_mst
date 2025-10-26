@@ -2,21 +2,28 @@ package utils;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import GraphIOModels.GraphData;
-
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.List;
 
 public class JsonUtils {
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
-    public static void writeGraphsToJson(List<GraphData> graphs, String filename) {
-        try (FileWriter writer = new FileWriter(filename)) {
-            gson.toJson(graphs, writer);
-            System.out.println("✅ Saved graphs to " + filename);
-        } catch (IOException e) {
-            e.printStackTrace();
+    public static <T> T readJson(String path, Class<T> clazz) throws IOException {
+        try (FileReader reader = new FileReader(path)) {
+            return gson.fromJson(reader, clazz);
+        }
+    }
+
+    public static <T> T[] readJsonArray(String path, Class<T[]> clazz) throws IOException {
+        try (FileReader reader = new FileReader(path)) {
+            return gson.fromJson(reader, clazz);
+        }
+    }
+
+    public static void writeJson(String path, Object data) throws IOException {
+        try (FileWriter writer = new FileWriter(path)) {
+            gson.toJson(data, writer);
         }
     }
 }

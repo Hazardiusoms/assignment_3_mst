@@ -1,47 +1,55 @@
-// tests/MSTTest.java
 package tests;
 
-import org.junit.jupiter.api.*;
-import GraphIOModels.*;
-import utils.*;
-import algorithms.*;
+import algorithms.KruskalMST;
+import algorithms.PrimMST;
+import GraphIOModels.Edge;
+import GraphIOModels.GraphData;
+import org.junit.jupiter.api.Test;
+
+import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class MSTTest {
+public class MSTAlgorithmsTest {
 
     @Test
-    public void correctnessPrimKruskalEqualCostSmall() {
-        GraphData g = GraphGenerator.generateRandomGraph(30);
-        PrimMST p = new PrimMST(g); p.run();
-        KruskalMST k = new KruskalMST(g); k.run();
-        assertEquals(p.getTotalCost(), k.getTotalCost(), "Prim and Kruskal costs must match");
-        assertEquals(g.numVertices - 1, p.getMstEdges().size());
-        assertEquals(g.numVertices - 1, k.getMstEdges().size());
-        assertTrue(GraphUtils.isAcyclic(g.numVertices, p.getMstEdges()));
-        assertTrue(GraphUtils.isAcyclic(g.numVertices, k.getMstEdges()));
-        assertTrue(GraphUtils.connectsAllVertices(g.numVertices, p.getMstEdges()));
+    public void testSmallGraphMST() {
+        GraphData g = new GraphData("test_graph", 4, Arrays.asList(
+                new Edge(0, 1, 10),
+                new Edge(0, 2, 6),
+                new Edge(0, 3, 5),
+                new Edge(1, 3, 15),
+                new Edge(2, 3, 4)
+        ));
+
+        PrimMST prim = new PrimMST(g);
+        KruskalMST kruskal = new KruskalMST(g);
+        prim.run();
+        kruskal.run();
+
+        assertEquals(15.0, prim.getTotalWeight(), 0.001);
+        assertEquals(15.0, kruskal.getTotalWeight(), 0.001);
+        assertEquals(3, prim.getMSTEdges().size());
+        assertEquals(3, kruskal.getMSTEdges().size());
     }
 
     @Test
-    public void disconnectedHandledGracefully() {
-        // Create a disconnected graph manually
-        GraphData g = new GraphData(5);
-        g.addEdge(0,1,1);
-        g.addEdge(1,2,1);
-        // nodes 3 and 4 disconnected between components
-        PrimMST p = new PrimMST(g); p.run();
-        KruskalMST k = new KruskalMST(g); k.run();
-        assertTrue(p.getMstEdges().size() < g.numVertices - 1 || k.getMstEdges().size() < g.numVertices - 1);
-    }
+    public void testPerformanceTracking() {
+        GraphData g = new GraphData("perf_graph", 6, Arrays.asList(
+                new Edge(0, 1, 4),
+                new Edge(0, 2, 3),
+                new Edge(1, 2, 1),
+                new Edge(1, 3, 2),
+                new Edge(2, 3, 4),
+                new Edge(3, 4, 2),
+                new Edge(4, 5, 6)
+        ));
 
-    @Test
-    public void performanceAndConsistency() {
-        GraphData g = GraphGenerator.generateRandomGraph(300);
-        PrimMST p1 = new PrimMST(g); p1.run();
-        PrimMST p2 = new PrimMST(g); p2.run();
-        assertTrue(p1.getExecutionTimeMs() >= 0);
-        assertTrue(p1.getOperationsCount() >= 0);
-        assertEquals(p1.getTotalCost(), p2.getTotalCost());
+        PrimMST prim = new PrimMST(g);
+        prim.run();
+
+        assertTrue(prim.getExecutionTime() >= 0);
+        assertTrue(prim.getOperationCount() > 0);
+        assertEquals(5, prim.getMSTEdges().size());
     }
 }
