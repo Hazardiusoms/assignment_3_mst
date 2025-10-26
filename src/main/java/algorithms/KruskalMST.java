@@ -2,105 +2,98 @@ package algorithms;
 
 import GraphIOModels.Edge;
 import GraphIOModels.GraphData;
-
 import java.util.*;
 
 public class KruskalMST {
+    private GraphData graph;
+    private List<Edge> mstEdges;
+    private double totalWeight;
+    private long operationCount;
+    private long executionTime;
 
-    private final GraphData graphData;
-    private final List<Edge> mstEdges = new ArrayList<>();
-    private int totalCost = 0;
-    private long operationCount = 0;
-    private double executionTimeMs = 0.0;
-
-    public KruskalMST(GraphData graphData) {
-        this.graphData = graphData;
-    }
-
-    // Disjoint Set (Union-Find) helper class
-    private static class Subset {
-        String parent;
-        int rank;
+    public KruskalMST(GraphData graph) {
+        this.graph = graph;
+        this.mstEdges = new ArrayList<>();
+        this.totalWeight = 0;
+        this.operationCount = 0;
     }
 
     public void run() {
-        long startTime = System.nanoTime();
+        long start = System.currentTimeMillis();
 
-        // Sort edges by weight
-        List<Edge> edges = new ArrayList<>(graphData.getEdges());
+        int V = graph.getNodeCount();
+        List<Edge> edges = new ArrayList<>(graph.getEdges());
         edges.sort(Comparator.comparingInt(Edge::getWeight));
-        operationCount += edges.size();
 
-        // Initialize disjoint sets for each vertex
-        Map<String, Subset> subsets = new HashMap<>();
-        for (String node : graphData.getNodes()) {
-            Subset subset = new Subset();
-            subset.parent = node;
-            subset.rank = 0;
-            subsets.put(node, subset);
+        // Create subsets
+        Subset[] subsets = new Subset[V];
+        for (int v = 0; v < V; v++) {
+            subsets[v] = new Subset(v, 0);
         }
 
-        int edgeCount = 0;
-        int vertexCount = graphData.getNodes().size();
+        int e = 0;
         int i = 0;
-
-        while (edgeCount < vertexCount - 1 && i < edges.size()) {
-            Edge nextEdge = edges.get(i++);
+        while (e < V - 1 && i < edges.size()) {
             operationCount++;
+            Edge next = edges.get(i++);
+            int x = find(subsets, next.src);
+            int y = find(subsets, next.dest);
 
-            String root1 = find(subsets, nextEdge.getFrom());
-            String root2 = find(subsets, nextEdge.getTo());
-
-            if (!root1.equals(root2)) {
-                mstEdges.add(nextEdge);
-                totalCost += nextEdge.getWeight();
-                union(subsets, root1, root2);
-                edgeCount++;
+            if (x != y) {
+                mstEdges.add(next);
+                totalWeight += next.weight;
+                union(subsets, x, y);
+                e++;
             }
         }
 
-        long endTime = System.nanoTime();
-        executionTimeMs = (endTime - startTime) / 1_000_000.0;
+        long end = System.currentTimeMillis();
+        executionTime = end - start;
     }
 
-    // Union-Find helpers
-    private String find(Map<String, Subset> subsets, String node) {
+    private int find(Subset[] subsets, int i) {
         operationCount++;
-        if (!subsets.get(node).parent.equals(node)) {
-            subsets.get(node).parent = find(subsets, subsets.get(node).parent);
-        }
-        return subsets.get(node).parent;
+        if (subsets[i].parent != i)
+            subsets[i].parent = find(subsets, subsets[i].parent);
+        return subsets[i].parent;
     }
 
-    private void union(Map<String, Subset> subsets, String root1, String root2) {
+    private void union(Subset[] subsets, int x, int y) {
         operationCount++;
-        Subset s1 = subsets.get(root1);
-        Subset s2 = subsets.get(root2);
-
-        if (s1.rank < s2.rank) {
-            s1.parent = root2;
-        } else if (s1.rank > s2.rank) {
-            s2.parent = root1;
+        int xroot = find(subsets, x);
+        int yroot = find(subsets, y);
+        if (subsets[xroot].rank < subsets[yroot].rank) {
+            subsets[xroot].parent = yroot;
+        } else if (subsets[xroot].rank > subsets[yroot].rank) {
+            subsets[yroot].parent = xroot;
         } else {
-            s2.parent = root1;
-            s1.rank++;
+            subsets[yroot].parent = xroot;
+            subsets[xroot].rank++;
         }
     }
 
-    // ✅ Getters for Main.java
+    public double getTotalWeight() {
+        return totalWeight;
+    }
+
     public List<Edge> getMstEdges() {
         return mstEdges;
-    }
-
-    public int getTotalCost() {
-        return totalCost;
     }
 
     public long getOperationCount() {
         return operationCount;
     }
 
-    public double getExecutionTimeMs() {
-        return executionTimeMs;
+    public long getExecutionTime() {
+        return executionTime;
+    }
+
+    static class Subset {
+        int parent, rank;
+
+        Subset(int parent, int rank) {
+            this.parent = parent;
+            this.rank = rank;
+        }
     }
 }

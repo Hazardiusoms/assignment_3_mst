@@ -1,75 +1,54 @@
 package utils;
 
-import GraphIOModels.Edge;
 import GraphIOModels.GraphData;
+import GraphIOModels.Edge;
+import utils.JsonUtils;
 
 import java.util.*;
 
 public class GraphGenerator {
 
-    private static final Random random = new Random();
-
     public static List<GraphData> generateGraphs() {
         List<GraphData> graphs = new ArrayList<>();
 
-        // 5 small graphs (≈30 nodes)
-        for (int i = 1; i <= 5; i++) {
-            graphs.add(generateGraph(i, 30, 0.3));
-        }
+        // 5 small (30 nodes)
+        for (int i = 0; i < 5; i++) graphs.add(generateGraph(30, "small_" + i));
 
-        // 10 medium graphs (≈300 nodes)
-        for (int i = 6; i <= 15; i++) {
-            graphs.add(generateGraph(i, 300, 0.2));
-        }
+        // 10 medium (300 nodes)
+        for (int i = 0; i < 10; i++) graphs.add(generateGraph(300, "medium_" + i));
 
-        // 10 large graphs (≈1000 nodes)
-        for (int i = 16; i <= 25; i++) {
-            graphs.add(generateGraph(i, 1000, 0.05));
-        }
+        // 10 large (1000 nodes)
+        for (int i = 0; i < 10; i++) graphs.add(generateGraph(1000, "large_" + i));
 
-        // 3 extra-large graphs
-        graphs.add(generateGraph(26, 1300, 0.04));
-        graphs.add(generateGraph(27, 1600, 0.03));
-        graphs.add(generateGraph(28, 2000, 0.02));
+        // 3 extra large (1300, 1600, 2000 nodes)
+        graphs.add(generateGraph(1300, "xlarge_1300"));
+        graphs.add(generateGraph(1600, "xlarge_1600"));
+        graphs.add(generateGraph(2000, "xlarge_2000"));
+
+        // Save to JSON
+        JsonUtils.writeGraphsToJson(graphs, "assign_3_input.json");
 
         return graphs;
     }
 
-    /**
-     * Generate a connected random graph.
-     * @param id Graph ID
-     * @param nodeCount number of vertices
-     * @param density probability of edge creation (0 < density ≤ 1)
-     */
-    private static GraphData generateGraph(int id, int nodeCount, double density) {
+    private static GraphData generateGraph(int numNodes, String id) {
+        Random rand = new Random();
         List<String> nodes = new ArrayList<>();
-        for (int i = 0; i < nodeCount; i++) {
+        List<Edge> edges = new ArrayList<>();
+
+        // Create nodes
+        for (int i = 0; i < numNodes; i++) {
             nodes.add("N" + i);
         }
 
-        List<Edge> edges = new ArrayList<>();
-
-        // Ensure connectivity with a spanning backbone
-        for (int i = 1; i < nodeCount; i++) {
-            String from = nodes.get(random.nextInt(i));
-            String to = nodes.get(i);
-            int weight = random.nextInt(90) + 10; // weight between 10–99
-            edges.add(new Edge(from, to, weight));
+        // Connect randomly (sparse)
+        for (int i = 0; i < numNodes * 2; i++) {
+            int src = rand.nextInt(numNodes);
+            int dest = rand.nextInt(numNodes);
+            int weight = rand.nextInt(100) + 1;
+            if (src != dest) edges.add(new Edge(src, dest, weight));
         }
 
-        // Add additional random edges based on density
-        for (int i = 0; i < nodeCount; i++) {
-            for (int j = i + 1; j < nodeCount; j++) {
-                if (random.nextDouble() < density) {
-                    int weight = random.nextInt(90) + 10;
-                    edges.add(new Edge(nodes.get(i), nodes.get(j), weight));
-                }
-            }
-        }
-
-        System.out.println("Generated graph ID " + id + " with " +
-                nodeCount + " nodes and " + edges.size() + " edges.");
-
-        return new GraphData(id, nodes, edges);
+        return new GraphData(id, numNodes, nodes, edges);
     }
 }

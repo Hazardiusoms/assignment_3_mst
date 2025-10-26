@@ -2,89 +2,70 @@ package algorithms;
 
 import GraphIOModels.Edge;
 import GraphIOModels.GraphData;
-
 import java.util.*;
 
 public class PrimMST {
+    private GraphData graph;
+    private List<Edge> mstEdges;
+    private double totalWeight;
+    private long operationCount;
+    private long executionTime;
 
-    private final GraphData graphData;
-    private final List<Edge> mstEdges = new ArrayList<>();
-    private int totalCost = 0;
-    private long operationCount = 0;
-    private double executionTimeMs = 0.0;
-
-    public PrimMST(GraphData graphData) {
-        this.graphData = graphData;
+    public PrimMST(GraphData graph) {
+        this.graph = graph;
+        this.mstEdges = new ArrayList<>();
+        this.totalWeight = 0;
+        this.operationCount = 0;
     }
 
     public void run() {
-        long startTime = System.nanoTime();
+        long start = System.currentTimeMillis();
 
-        List<String> nodes = graphData.getNodes();
-        Map<String, List<Edge>> adj = buildAdjacencyList(graphData.getEdges());
+        int V = graph.getNodeCount();
+        List<List<Edge>> adj = graph.getAdjacencyList();
 
-        if (nodes.isEmpty()) return;
-
-        Set<String> visited = new HashSet<>();
+        boolean[] visited = new boolean[V];
         PriorityQueue<Edge> pq = new PriorityQueue<>(Comparator.comparingInt(Edge::getWeight));
 
-        String startNode = nodes.get(0);
-        visited.add(startNode);
-
-        // Add all edges from the starting node
-        for (Edge e : adj.getOrDefault(startNode, new ArrayList<>())) {
-            pq.offer(e);
-            operationCount++;
+        visited[0] = true;
+        for (Edge e : adj.get(0)) {
+            pq.add(e);
         }
 
-        while (!pq.isEmpty() && visited.size() < nodes.size()) {
-            Edge edge = pq.poll();
+        while (!pq.isEmpty() && mstEdges.size() < V - 1) {
             operationCount++;
+            Edge edge = pq.poll();
 
-            String nextNode = !visited.contains(edge.getFrom()) ? edge.getFrom() : edge.getTo();
+            if (visited[edge.getDest()]) continue;
 
-            if (visited.contains(nextNode)) continue;
-
-            visited.add(nextNode);
             mstEdges.add(edge);
-            totalCost += edge.getWeight();
+            totalWeight += edge.getWeight();
+            visited[edge.getDest()] = true;
 
-            for (Edge e : adj.getOrDefault(nextNode, new ArrayList<>())) {
-                String other = e.getFrom().equals(nextNode) ? e.getTo() : e.getFrom();
-                if (!visited.contains(other)) {
-                    pq.offer(e);
-                    operationCount++;
+            for (Edge next : adj.get(edge.getDest())) {
+                if (!visited[next.getDest()]) {
+                    pq.add(next);
                 }
             }
         }
 
-        long endTime = System.nanoTime();
-        executionTimeMs = (endTime - startTime) / 1_000_000.0;
+        long end = System.currentTimeMillis();
+        executionTime = end - start;
     }
 
-    private Map<String, List<Edge>> buildAdjacencyList(List<Edge> edges) {
-        Map<String, List<Edge>> adj = new HashMap<>();
-        for (Edge e : edges) {
-            adj.computeIfAbsent(e.getFrom(), k -> new ArrayList<>()).add(e);
-            adj.computeIfAbsent(e.getTo(), k -> new ArrayList<>()).add(e);
-        }
-        return adj;
+    public double getTotalWeight() {
+        return totalWeight;
     }
 
-    // ✅ Getters for Main.java
     public List<Edge> getMstEdges() {
         return mstEdges;
-    }
-
-    public int getTotalCost() {
-        return totalCost;
     }
 
     public long getOperationCount() {
         return operationCount;
     }
 
-    public double getExecutionTimeMs() {
-        return executionTimeMs;
+    public long getExecutionTime() {
+        return executionTime;
     }
 }
